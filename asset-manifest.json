@@ -1,0 +1,15 @@
+{
+  "files": {
+    "main.css": "/gather-dance/static/css/main.5022dbcd.css",
+    "main.js": "/gather-dance/static/js/main.2d59c62e.js",
+    "static/js/787.cce82a52.chunk.js": "/gather-dance/static/js/787.cce82a52.chunk.js",
+    "index.html": "/gather-dance/index.html",
+    "main.5022dbcd.css.map": "/gather-dance/static/css/main.5022dbcd.css.map",
+    "main.2d59c62e.js.map": "/gather-dance/static/js/main.2d59c62e.js.map",
+    "787.cce82a52.chunk.js.map": "/gather-dance/static/js/787.cce82a52.chunk.js.map"
+  },
+  "entrypoints": [
+    "static/css/main.5022dbcd.css",
+    "static/js/main.2d59c62e.js"
+  ]
+}
