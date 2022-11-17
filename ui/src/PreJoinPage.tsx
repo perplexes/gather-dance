@@ -18,10 +18,14 @@ import {
 export const PreJoinPage = () => {
   // initial state from query parameters
   const searchParams = new URLSearchParams(window.location.search);
+  let apiHost = window.location.protocol + '//' + window.location.hostname + ':4567/rooms'
+  if(process.env.NODE_ENV == 'production') {
+    apiHost = 'https://api.gather.dance/rooms'
+  }
 
   return (
     <Box width='50%'>
-      <form action={window.location.protocol+'//'+window.location.hostname+':4567/rooms'} method='post'>
+      <form action={} method='post'>
         <FormControl>
         <FormLabel>Room Name</FormLabel>
         <Input type='text' name='room' />
