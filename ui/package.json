@@ -1,6 +1,7 @@
 {
-  "name": "ansible-space",
+  "name": "gather-dance",
   "version": "0.1.0",
+  "homepage": "https://gather.dance",
   "private": true,
   "dependencies": {
     "@chakra-ui/react": "^2.4.1",
@@ -15,6 +16,7 @@
     "@types/react": "^18.0.9",
     "@types/react-dom": "^18.0.4",
     "framer-motion": "^6.2.9",
+    "gh-pages": "^4.0.0",
     "livekit-client": "^1.5.0",
     "react": "^18.1.0",
     "react-dom": "^18.1.0",
@@ -28,7 +30,9 @@
     "start": "react-scripts start",
     "build": "react-scripts build",
     "test": "react-scripts test",
-    "eject": "react-scripts eject"
+    "eject": "react-scripts eject",
+    "predeploy": "npm run build",
+    "deploy": "gh-pages -d build"
   },
   "eslintConfig": {
     "extends": "react-app"
