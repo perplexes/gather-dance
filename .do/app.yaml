@@ -1,0 +1,11 @@
+name: gather-dance
+
+services:
+- name: backend
+  github:
+    repo: perplexes/gather-dance
+    branch: main
+    deploy_on_push: true
+  source_dir: backend
+  routes:
+  - path: /api

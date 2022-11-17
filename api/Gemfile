@@ -1,0 +1,6 @@
+source 'https://rubygems.org'
+gem 'sinatra'
+gem 'webrick'
+gem 'livekit-server-sdk', require: 'livekit'
+gem 'mastodon-api', require: 'mastodon'
+gem 'pry-byebug'
