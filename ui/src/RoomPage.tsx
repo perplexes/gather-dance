@@ -8,20 +8,20 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import {HStack, VStack, Stack, Avatar, AvatarBadge, Box, Card, CardHeader, Heading, CardBody, Wrap, WrapItem } from '@chakra-ui/react'
 
 export const RoomPage = () => {
+  const { state } = useLocation();
+  const {token, avatarUrl, mastodonAddress} = state;
   const [roomOwnerId, setRoomOwnerId] = useState('');
   const [roomName, setRoomName] = useState('');
-  const [numParticipants, setNumParticipants] = useState(0);
-  const [displayOptions, setDisplayOptions] = useState<DisplayOptions>({
-    stageLayout: 'grid',
-    showStats: false,
-  });
+  // const [numParticipants, setNumParticipants] = useState(0);
+
   const navigate = useNavigate();
   // TODO: All this should come from ajax not in a redirect
-  const query = new URLSearchParams(useLocation().search);
-  const url = query.get('url') || '';
-  const token = query.get('token');
-  const recorder = query.get('recorder');
 
+  let url = 'wss://livekit.honk.cafe';
+  if (process.env.NODE_ENV == 'development'){
+    url = 'ws://127.0.0.1:7880'
+  }
+  
   if (!token) {
     return <div>token is required</div>;
   }
@@ -30,9 +30,9 @@ export const RoomPage = () => {
     navigate('/');
   };
 
-  const updateParticipantSize = (room: Room) => {
-    setNumParticipants(room.participants.size + 1);
-  };
+  // const updateParticipantSize = (room: Room) => {
+  //   setNumParticipants(room.participants.size + 1);
+  // };
 
   const updateRoomOwnerId = (roomOwnerId: string) => {
     setRoomOwnerId(roomOwnerId);
@@ -42,21 +42,14 @@ export const RoomPage = () => {
     setRoomName(room.name);
   };
 
-  const onParticipantDisconnected = (room: Room) => {
-    updateParticipantSize(room);
+  // const onParticipantDisconnected = (room: Room) => {
+  //   updateParticipantSize(room);
+  // };
 
-    /* Special rule for recorder */
-    if (recorder && parseInt(recorder, 10) === 1 && room.participants.size === 0) {
-      console.log('END_RECORDING');
-    }
-  };
-
-  const updateOptions = (options: DisplayOptions) => {
-    setDisplayOptions({
-      ...displayOptions,
-      ...options,
-    });
-  };
+  type ParsedMetadata = {
+    avatarUrl: string;
+    mastodonAddress: string;
+  }
 
   return (
     <Box padding='1em'>
@@ -67,10 +60,9 @@ export const RoomPage = () => {
           token={token}
           onConnected={(room) => {
             setLogLevel('debug');
-            onConnected(room, query);
-            room.on(RoomEvent.ParticipantConnected, () => updateParticipantSize(room));
-            room.on(RoomEvent.ParticipantDisconnected, () => onParticipantDisconnected(room));
-            updateParticipantSize(room);
+            // room.on(RoomEvent.ParticipantConnected, () => updateParticipantSize(room));
+            // room.on(RoomEvent.ParticipantDisconnected, () => onParticipantDisconnected(room));
+            // updateParticipantSize(room);
             updateRoomName(room);
             // console.log('metadata:');
             // console.log(room.metadata);
@@ -85,54 +77,59 @@ export const RoomPage = () => {
               simulcast: true,
             },
           }}
+
           // stageRenderer renders the entire stage
           // stageRenderer={(props: StageProps) => {
           //   return <div />;
           // }}
           // participantRenderer renders a single participant
           participantRenderer={(props: ParticipantProps) => {
-            const pmd = props.participant.metadata;
-            console.log('pmd', pmd);
+            const {participant} = props;
+            const {metadata, identity, permissions, audioLevel, name} = participant;
+            var parsedMetadata = { avatarUrl: '', mastodonAddress: '' } as ParsedMetadata;
 
-            let parsedMetadata;
-            if (pmd !== undefined && pmd !== ''){
-              parsedMetadata = JSON.parse(pmd);
-             } else {
-              return null;
-             }
+            if (metadata !== undefined && metadata !== '') {
+              parsedMetadata = JSON.parse(metadata);
+            }
+            if(participant.isLocal){
+              parsedMetadata.avatarUrl = avatarUrl;
+              parsedMetadata.mastodonAddress = mastodonAddress;
+              // This should cause 'ParticipantMetadataChanged' to fire
+              participant.setMetadata(JSON.stringify(parsedMetadata));
+            }
           
             // https://mravatar.r669.live/avatar/@holgerhuo@dragon-fly.club for mastodon avatar
             let permissionLevel;
-            if (props.participant.identity == roomOwnerId) {
+            if (identity == roomOwnerId) {
               permissionLevel = 'Host'
-            } else if (props.participant.permissions?.canPublish) {
+            } else if (permissions?.canPublish) {
               permissionLevel = 'Speaker'
             } else {
               permissionLevel = 'Listener'
             };
             let speakingOutline = {};
 
-            if (props.participant.audioLevel > 0) {
+            if (audioLevel > 0) {
               speakingOutline = { outline: '5px solid #91b6ff' };
             }
             console.log(props)
 
             return <WrapItem><Card alignItems='center' >
-              <Avatar style={speakingOutline} name={props.participant.name} src={parsedMetadata['avatar_url']}>
-                {props.participant.permissions?.canPublish
+              <Avatar style={speakingOutline} name={name} src={parsedMetadata.avatarUrl}>
+                {permissions?.canPublish
                   ? <AvatarBadge boxSize='1.25em' bg='white'><span className='fa fa_question' style={{ color: "#000" }} ><FontAwesomeIcon icon={faMicrophoneLines} /></span></AvatarBadge>
                   : ''
                 }
               </Avatar>
-              <Heading size='md'>{props.participant.name}</Heading>
+              <Heading size='md'>{name}</Heading>
               <p>{permissionLevel}</p>
-              <p>{props.participant.audioLevel}</p>
+              <p>{audioLevel}</p>
             </Card></WrapItem>;
           }}
           // controlRenderer renders the control bar
-          controlRenderer={(props: ControlsProps) => {
-            return <div />;
-          }}
+          // controlRenderer={(props: ControlsProps) => {
+          //   return <div />;
+          // }}
           onLeave={onLeave}
         />
       </Wrap>

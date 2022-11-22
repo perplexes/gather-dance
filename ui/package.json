@@ -1,7 +1,7 @@
 {
-  "name": "gather-dance",
+  "name": "honk-cafe",
   "version": "0.1.0",
-  "homepage": "https://gather.dance",
+  "homepage": "https://honk.cafe",
   "private": true,
   "dependencies": {
     "@chakra-ui/react": "^2.4.1",
@@ -20,6 +20,7 @@
     "livekit-client": "^1.5.0",
     "react": "^18.1.0",
     "react-dom": "^18.1.0",
+    "react-hook-form": "^7.39.5",
     "react-icons": "^3.0.0",
     "react-router-dom": "^6.4.3",
     "react-scripts": "5.0.1",

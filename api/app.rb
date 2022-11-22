@@ -3,13 +3,14 @@ require 'livekit'
 require 'json'
 require 'securerandom'
 require 'pry'
+require 'logger'
 
 API_URL = ENV['API_URL'] || 'http://127.0.0.1:7880'
-WS_URL = ENV['WS_URL'] || 'ws://127.0.0.1:7880'
 API_KEY = ENV['API_KEY'] || 'devkey'
 API_SECRET = ENV['API_SECRET'] || 'secret'
 
 set :bind, '0.0.0.0'
+set :logging, Logger::DEBUG
 
 def get_client
     LiveKit::RoomServiceClient.new(API_URL, api_key: API_KEY, api_secret: API_SECRET)
@@ -20,16 +21,17 @@ def get_token
 end
 
 post '/rooms' do
+    body = JSON.parse(request.body.read)
     # We'll use this to set the host for the room
     # This might turn into their mastodon id
     identity = SecureRandom.uuid
-    # Their display name
-    name = params['name']
     # Name of the room/jam/gather
-    room_name = params['room']
+    room_name = body['room']
     # Mastodon address
     # TODO: oauth flow to connect
-    mastodon_address = params['mastodon_address']
+    mastodon_address = body['mastodon_address']
+    binding.pry
+    name = mastodon_address.split('@').reject(&:empty?).first
 
     token = get_token
     token.identity = identity
@@ -45,27 +47,28 @@ post '/rooms' do
         grant[:roomAdmin] = true
     # TODO: Planned moderator? Special moderator link (w/jwt embed or link shortened?)
     else
-        binding.pry
         grant[:canPublish] = false
     end
     token.add_grant(grant)
-    jwt = token.to_jwt
+    jwt_token = token.to_jwt
 
     # avatar from masatodon
-    mravatar_resp = Faraday.get("https://mravatar.r669.live/avatar/#{mastodon_address}")
-    avatar_url = mravatar_resp.headers['location']
-    token.metadata = JSON.generate(avatar_url: avatar_url)
+    # TODO: This could fail; and we should probably run our own?
+    # TODO: This should be async / part of oauth flow so it can take a while
+    begin
+        mravatar_resp = Faraday.get("https://mravatar.r669.live/avatar/#{mastodon_address}")
+        avatar_url = mravatar_resp.headers['location']
+    rescue
+    end
 
-    fragment_data = URI::Generic.build(
-        path: '/room',
-        query: URI.encode_www_form(
-            token: jwt,
-            url: WS_URL
-        ),
-        )
-    host = URI.parse(request.referer)
-    host.fragment = fragment_data.to_s
-    redirect host.to_s
+    response_obj = {
+        jwt_token: jwt_token,
+        avatar_url: avatar_url,
+        mastodon_address: mastodon_address,
+    }
+    # TODO: fix this in production (i.e. not just anyone)
+    response['Access-Control-Allow-Origin'] = request.get_header('HTTP_ORIGIN') || 'http://localhost:3000'
+    JSON.generate(response_obj)
 end
 
 get '/rooms' do
