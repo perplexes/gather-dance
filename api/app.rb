@@ -30,7 +30,6 @@ post '/rooms' do
     # Mastodon address
     # TODO: oauth flow to connect
     mastodon_address = body['mastodon_address']
-    binding.pry
     name = mastodon_address.split('@').reject(&:empty?).first
 
     token = get_token

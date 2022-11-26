@@ -1,7 +1,7 @@
 import { faSquare, faThLarge, faUserFriends, faMicrophoneLines, faPodcast } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { Room, RoomEvent, setLogLevel, VideoPresets } from 'livekit-client';
-import { DisplayContext, DisplayOptions, LiveKitRoom, StageProps, ParticipantProps, ControlsProps } from '@livekit/react-components';
+import { DisplayContext, DisplayOptions, LiveKitRoom, StageProps, ParticipantProps, ControlsProps, ControlsView } from '@livekit/react-components';
 import { useState } from 'react';
 import 'react-aspect-ratio/aspect-ratio.css';
 import { useNavigate, useLocation } from 'react-router-dom';
@@ -12,6 +12,9 @@ export const RoomPage = () => {
   const {token, avatarUrl, mastodonAddress} = state;
   const [roomOwnerId, setRoomOwnerId] = useState('');
   const [roomName, setRoomName] = useState('');
+  const [videoEnabled, setVideoEnabled] = useState(false);
+  const [audioEnabled, setAudioEnabled] = useState(true);
+
   // const [numParticipants, setNumParticipants] = useState(0);
 
   const navigate = useNavigate();
@@ -19,7 +22,7 @@ export const RoomPage = () => {
 
   let url = 'wss://livekit.honk.cafe';
   if (process.env.NODE_ENV == 'development'){
-    url = 'ws://127.0.0.1:7880'
+    url = 'ws://' + window.location.hostname + ':7880'
   }
   
   if (!token) {
@@ -71,6 +74,7 @@ export const RoomPage = () => {
               const meta_object = JSON.parse(metadata);
               updateRoomOwnerId(meta_object['owner']);
             }
+            // onConnected(room);
           }}
           roomOptions={{
             publishDefaults: {
@@ -127,9 +131,9 @@ export const RoomPage = () => {
             </Card></WrapItem>;
           }}
           // controlRenderer renders the control bar
-          // controlRenderer={(props: ControlsProps) => {
-          //   return <div />;
-          // }}
+          controlRenderer={(props: ControlsProps) => {
+            return <ControlsView {...props} enableScreenShare={false} enableAudio={true} enableVideo={false} />;
+          }}
           onLeave={onLeave}
         />
       </Wrap>
@@ -137,17 +141,17 @@ export const RoomPage = () => {
   );
 };
 
-async function onConnected(room: Room, query: URLSearchParams) {
-  // make it easier to debug
-  (window as any).currentRoom = room;
+// async function onConnected(room: Room, query: URLSearchParams) {
+//   // make it easier to debug
+//   (window as any).currentRoom = room;
 
-  const audioDeviceId = query.get('audioDeviceId');
-  if (audioDeviceId && room.options.audioCaptureDefaults) {
-    room.options.audioCaptureDefaults.deviceId = audioDeviceId;
-  }
-  await room.localParticipant.setMicrophoneEnabled(true);
-}
+//   const audioDeviceId = query.get('audioDeviceId');
+//   if (audioDeviceId && room.options.audioCaptureDefaults) {
+//     room.options.audioCaptureDefaults.deviceId = audioDeviceId;
+//   }
+//   await room.localParticipant.setMicrophoneEnabled(true);
+// }
 
-function isSet(query: URLSearchParams, key: string): boolean {
-  return query.get(key) === '1' || query.get(key) === 'true';
-}
+// function isSet(query: URLSearchParams, key: string): boolean {
+//   return query.get(key) === '1' || query.get(key) === 'true';
+// }
