@@ -31,7 +31,7 @@ export const App = () => (
   <ChakraProvider theme={theme}>
     <Router>
       <Routes>
-        <Route path="/room" element={<RoomPage />} />
+        <Route path="/room/:sid" element={<RoomPage />} />
         <Route path="/" element={<PreJoinPage />} />
       </Routes>
     </Router>

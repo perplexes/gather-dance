@@ -20,13 +20,25 @@ def get_token
     LiveKit::AccessToken.new(api_key: API_KEY, api_secret: API_SECRET)
 end
 
+def find_room(sid)
+    get_client.list_rooms.data['rooms'].detect{|r| r['sid'] == sid}
+end
+
 post '/rooms' do
     body = JSON.parse(request.body.read)
     # We'll use this to set the host for the room
     # This might turn into their mastodon id
     identity = SecureRandom.uuid
+
     # Name of the room/jam/gather
     room_name = body['room']
+
+    # Trying to join via url
+    if !body['room'] && body['sid']
+        room = find_room
+        if !room
+            return 
+    
     # Mastodon address
     # TODO: oauth flow to connect
     mastodon_address = body['mastodon_address']
@@ -64,6 +76,8 @@ post '/rooms' do
         jwt_token: jwt_token,
         avatar_url: avatar_url,
         mastodon_address: mastodon_address,
+        room_sid: room.data['sid'],
+        room_name: room_name,
     }
     # TODO: fix this in production (i.e. not just anyone)
     response['Access-Control-Allow-Origin'] = request.get_header('HTTP_ORIGIN') || 'http://localhost:3000'
@@ -71,6 +85,18 @@ post '/rooms' do
 end
 
 get '/rooms' do
-    data = get_client.list_rooms.data['rooms'].map{|i| [i['name'], i['num_participants']]}
+    data = get_client.list_rooms.data['rooms'].map{|i| [i['name'], i['numParticipants']]}
+    JSON.generate(data)
+end
+
+get '/rooms/:sid' do
+    data = get_client.list_rooms.data['rooms'].select{|r| r['sid'] == params[:sid]}.map do |r|
+        {
+            sid: r['sid'],
+            name: r['name'],
+            numParticipants: r['numParticipants'],
+            creationTime: r['creationTime'],
+        }
+    end
     JSON.generate(data)
 end

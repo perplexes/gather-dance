@@ -2,36 +2,45 @@ import { faSquare, faThLarge, faUserFriends, faMicrophoneLines, faPodcast } from
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { Room, RoomEvent, setLogLevel, VideoPresets } from 'livekit-client';
 import { DisplayContext, DisplayOptions, LiveKitRoom, StageProps, ParticipantProps, ControlsProps, ControlsView } from '@livekit/react-components';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import 'react-aspect-ratio/aspect-ratio.css';
-import { useNavigate, useLocation } from 'react-router-dom';
+import { useNavigate, useLocation, useParams } from 'react-router-dom';
 import {HStack, VStack, Stack, Avatar, AvatarBadge, Box, Card, CardHeader, Heading, CardBody, Wrap, WrapItem } from '@chakra-ui/react'
 
 export const RoomPage = () => {
+  const navigate = useNavigate();
   const { state } = useLocation();
-  const {token, avatarUrl, mastodonAddress} = state;
+  const { sid } = useParams();
+
+  const {token, avatarUrl, mastodonAddress} = state || {};
   const [roomOwnerId, setRoomOwnerId] = useState('');
-  const [roomName, setRoomName] = useState('');
+  const [roomName, setRoomName] = useState(state ? state.roomName : null);
   const [videoEnabled, setVideoEnabled] = useState(false);
   const [audioEnabled, setAudioEnabled] = useState(true);
 
-  // const [numParticipants, setNumParticipants] = useState(0);
 
-  const navigate = useNavigate();
+
+  // const [numParticipants, setNumParticipants] = useState(0);
   // TODO: All this should come from ajax not in a redirect
 
   let url = 'wss://livekit.honk.cafe';
   if (process.env.NODE_ENV == 'development'){
     url = 'ws://' + window.location.hostname + ':7880'
   }
-  
-  if (!token) {
-    return <div>token is required</div>;
-  }
 
   const onLeave = () => {
     navigate('/');
   };
+
+  useEffect(() => {
+    if (!token && sid) {
+      navigate('/', {state: {sid}});
+    }
+  }, [token, sid]);
+
+if (!token) {
+  return null;
+}
 
   // const updateParticipantSize = (room: Room) => {
   //   setNumParticipants(room.participants.size + 1);
@@ -41,6 +50,7 @@ export const RoomPage = () => {
     setRoomOwnerId(roomOwnerId);
   };
 
+  // Should happen when room data changes but not on connect -- get data from API response instead
   const updateRoomName = (room: Room) => {
     setRoomName(room.name);
   };
@@ -66,7 +76,7 @@ export const RoomPage = () => {
             // room.on(RoomEvent.ParticipantConnected, () => updateParticipantSize(room));
             // room.on(RoomEvent.ParticipantDisconnected, () => onParticipantDisconnected(room));
             // updateParticipantSize(room);
-            updateRoomName(room);
+            // updateRoomName(room);
             // console.log('metadata:');
             // console.log(room.metadata);
             const metadata = room.metadata;
